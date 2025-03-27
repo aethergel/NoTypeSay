@@ -202,7 +202,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     // Once AddonToDoList is added to ClientStructs, this can be replaced with a vtable hook,
     // but for now we'll use this probably-longer-than-necessary signature
     // ReSharper disable once FieldCanBeMadeReadOnly.Local
-    [Signature("48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 F0 4C 8B F9", DetourName = nameof(ReceiveEventDetour))]
+    [Signature("48 89 5C 24 ?? 55 56 57 41 56 41 57 48 8B EC 48 83 EC 70 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 F0 41 8B F8", DetourName = nameof(ReceiveEventDetour))]
     private Hook<AtkEventListener.Delegates.ReceiveEvent>? receiveEventDetour = null!;
 
     
@@ -217,7 +217,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private bool HandleEvent(AtkEventType eventType, int eventParam, AtkEvent* atkEvent, AtkEventData* atkEventData) {
         try
         {
-            if (eventType != AtkEventType.MouseUp || eventParam != 1 || atkEventData->MouseData.IsRightClick)
+            if (eventType != AtkEventType.MouseUp || eventParam != 1 || atkEventData->MouseData.ButtonId == 1)
                 return false;
 
             // Figure out which quest entry this is
@@ -277,7 +277,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
     private static void SendChat(string message)
     {
         var str = Utf8String.FromString(message);
-        str->SanitizeString(0x27F, (Utf8String*)nint.Zero);
+        str->SanitizeString(AllowedEntities.Numbers|AllowedEntities.UppercaseLetters|AllowedEntities.LowercaseLetters|AllowedEntities.OtherCharacters|AllowedEntities.SpecialCharacters);
         // This is the max length the chatbox would allow someone to type in
         // so make sure we don't send anything longer than this
         if (str->StringLength > 500) return;
