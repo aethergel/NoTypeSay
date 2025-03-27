@@ -229,18 +229,18 @@ public sealed unsafe class Plugin : IDalamudPlugin
             }
 
             var parentId = targetNode->ParentNode->NodeId;
-            if (parentId <= 60000)
+            if (parentId <= 70000)
             {
                 PluginLog.Debug("this isn't a title component");
                 return false;
             }
 
             // adjust the node ID to get the entry ID
-            parentId -= 60001;
+            parentId -= 70001;
 
             if (parentId >= questEntries.Count)
             {
-                PluginLog.Debug($"overshot the entries somehow- {parentId} >= ${questEntries.Count}");
+                PluginLog.Debug($"overshot the entries somehow- {parentId} >= {questEntries.Count}");
                 return false;
             }
 
