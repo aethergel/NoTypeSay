@@ -305,7 +305,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             ClientLanguage.French => todoText.Contains($"“{message}”"),
             ClientLanguage.Japanese => todoText.Contains($"『{message}』") || todoText.Contains($"「{message}」"),
             ClientLanguage.German => todoText.Contains($"„{message}“"),
-            (ClientLanguage)4 => todoText.Contains($"\"{message}\""),
+            (ClientLanguage)4 => todoText.Contains($"\"{message}\"") || todoText.Contains($"'{message}'"),
             _ => false
         };
     }
