@@ -10,6 +10,17 @@
     <AssemblyName>NoTypeSay</AssemblyName>
     <RootNamespace>NoTypeSay</RootNamespace>
   </PropertyGroup>
+
+    <PropertyGroup>
+        <DalamudLibPath>$(APPDATA)\XIVLauncherKR\Addon\Hooks\dev\</DalamudLibPath>
+        <AssemblySearchPaths>
+            $(DalamudLibPath);
+            {CandidateAssemblyFiles};
+            {HintPathFromItem};
+            {TargetFrameworkDirectory};
+            {RawFileName}
+        </AssemblySearchPaths>
+    </PropertyGroup>
     
     <ItemGroup>
     <Content Include="NoTypeSay.json" />
