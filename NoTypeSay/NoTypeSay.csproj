@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.SDK/11.0.0">
   <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
     <Version>0.0.0.1</Version>
-    <Description>A sample plugin.</Description>
+    <Description>"스네린"을 포함하는 문장을 입력하다가 지쳐버렸나요? 이젠 클릭만 하세요!</Description>
     <PackageProjectUrl>https://github.com/salanth357/NoTypeSay</PackageProjectUrl>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <IsPackable>false</IsPackable>
@@ -10,7 +11,18 @@
     <RootNamespace>NoTypeSay</RootNamespace>
   </PropertyGroup>
 
-  <ItemGroup>
+  <PropertyGroup>
+    <DalamudLibPath>$(APPDATA)\XIVLauncherKR\Addon\Hooks\dev\</DalamudLibPath>
+    <AssemblySearchPaths>
+        $(DalamudLibPath);
+        {CandidateAssemblyFiles};
+        {HintPathFromItem};
+        {TargetFrameworkDirectory};
+        {RawFileName}
+    </AssemblySearchPaths>
+  </PropertyGroup>
+
+    <ItemGroup>
     <Content Include="NoTypeSay.json" />
   </ItemGroup>
 </Project>

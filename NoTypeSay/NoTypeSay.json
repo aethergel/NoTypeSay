@@ -1,8 +1,8 @@
 {
     "Author": "salanth357",
     "Name": "NoTypeSay",
-        "Punchline": "Tired of typing snae ling? Click instead!",
-    "Description": "Adds a button on the duty list for /say quests like quest items and emotes have!\n Compatible with all languages and controllers.",
+        "Punchline": "\"스네린\"을 포함하는 문장을 입력하다가 지쳐버렸나요? 이젠 클릭만 하세요!",
+    "Description": "임무 목록에 /말하기 퀘스트를 위한 버튼을 추가합니다!\n모든 언어, 그리고 컨트롤러도 지원합니다.",
     "ApplicableVersion": "any",
     "Tags": [ "quest", "say" ],
     "CategoryTags": [ "UI", "Utility" ] 

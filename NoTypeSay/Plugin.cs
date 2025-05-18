@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Dalamud.IoC;
 using Dalamud.Plugin;
@@ -292,8 +292,28 @@ public sealed unsafe class Plugin : IDalamudPlugin
     {
         var q = DataManager.GetExcelSheet<Quest>().FirstOrDefault(x => x.Name.ToString() == title);
         if (q.RowId == 0) return "";
-        var row = TextSheetForQuest(q).FirstOrDefault(qt =>　MessageMatch(detail, qt.Value.ToString()));
-        return row.RowId == 0 ? "" : row.Value.ToString();
+        var row = TextSheetForQuest(q).FirstOrDefault(qt => MessageMatch(detail, qt.Value.ToString()));
+        if (row.RowId == 0) return "";
+
+        var message = row.Value.ToString();
+
+        if (
+            detail.Contains($"\"{message}?\"") ||
+            detail.Contains($"'{message}?'")
+        )
+        {
+            if (!message.EndsWith("?"))
+                message += "?";
+        }
+        else if (
+            detail.Contains($"\"{message}!\"") ||
+            detail.Contains($"'{message}!'")
+        )
+        {
+            if (!message.EndsWith("!"))
+                message += "!";
+        }
+        return message;
     }
 
     private static bool MessageMatch(string todoText, string message)
@@ -305,6 +325,9 @@ public sealed unsafe class Plugin : IDalamudPlugin
             ClientLanguage.French => todoText.Contains($"“{message}”"),
             ClientLanguage.Japanese => todoText.Contains($"『{message}』") || todoText.Contains($"「{message}」"),
             ClientLanguage.German => todoText.Contains($"„{message}“"),
+            (ClientLanguage)4 => todoText.Contains($"\"{message}\"") || todoText.Contains($"'{message}'") ||
+            todoText.Contains($"\"{message}?\"") || todoText.Contains($"'{message}?'") ||
+            todoText.Contains($"\"{message}!\"") || todoText.Contains($"'{message}!'"),
             _ => false
         };
     }
