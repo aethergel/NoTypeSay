@@ -1,5 +1,5 @@
 # NoTypeSay
 
-Adds a button to the duty list for /say quests so you don't have to type for them
+임무 목록에 /말하기 퀘스트를 위한 버튼을 추가합니다
 
-![image](https://github.com/user-attachments/assets/8eafb476-f309-49f0-bf54-78c4d395dd74)
+<img src="https://github.com/user-attachments/assets/fe49372c-910e-48d8-8943-7265610ff942" width="700"/>
