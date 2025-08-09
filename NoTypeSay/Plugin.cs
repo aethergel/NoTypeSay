@@ -294,7 +294,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
         public void Dispose()
         {
             if (TitleText != null) TitleText->Dtor(true);
-            if (DetailText != null) TitleText->Dtor(true);
+            if (DetailText != null) DetailText->Dtor(true);
             foreach (var s in Strings)
                 if (s != null)
                     s->Dtor(true);
