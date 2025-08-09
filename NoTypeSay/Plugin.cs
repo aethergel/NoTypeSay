@@ -158,8 +158,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
             var e = new Entry
             {
                 Index = i,
-                TitleText = Utf8String.FromSequence(sad->StringArray[9 + i]),
-                DetailText = Utf8String.FromSequence(sad->StringArray[9 + entryCount + i]),
+                TitleText = Utf8String.FromSequence((byte*)sad->StringArray[9 + i]),
+                DetailText = Utf8String.FromSequence((byte*)sad->StringArray[9 + entryCount + i]),
                 ButtonCount = nad->IntArray[39 + i]
             };
             e.Strings = new Utf8String*[e.ButtonCount + 1]; // Always make room for one more in case I need to add
@@ -167,7 +167,7 @@ public sealed unsafe class Plugin : IDalamudPlugin
             {
                 e.ItemIDs.Add(nad->IntArray[49 + offset]);
                 e.IconIDs.Add(nad->IntArray[89 + offset]);
-                e.Strings[j] = Utf8String.FromSequence(sad->StringArray[119 + offset]);
+                e.Strings[j] = Utf8String.FromSequence((byte*)sad->StringArray[119 + offset]);
                 offset++;
             }
 
