@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.Sdk/13.0.0">
-  <PropertyGroup>
-    <Version>1.0.0.1</Version>
-    <Description>Tired of typing snae ling?</Description>
-    <PackageProjectUrl>https://github.com/salanth357/NoTypeSay</PackageProjectUrl>
-    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
-    <IsPackable>false</IsPackable>
-    <AssemblyName>NoTypeSay</AssemblyName>
-    <RootNamespace>NoTypeSay</RootNamespace>
-  </PropertyGroup>
+    <PropertyGroup>
+        <Version>1.0.1.0</Version>
+        <Description>Tired of typing snae ling?</Description>
+        <PackageProjectUrl>https://github.com/salanth357/NoTypeSay</PackageProjectUrl>
+        <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+        <IsPackable>false</IsPackable>
+        <AssemblyName>NoTypeSay</AssemblyName>
+        <RootNamespace>NoTypeSay</RootNamespace>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="NoTypeSay.json" />
-  </ItemGroup>
+    <ItemGroup>
+        <Content Include="NoTypeSay.json"/>
+    </ItemGroup>
 </Project>
