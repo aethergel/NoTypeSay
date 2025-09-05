@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using Dalamud.Game;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
@@ -13,13 +14,15 @@ using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Arrays;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using FFXIVClientStructs.Interop;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
+using Lumina.Extensions;
 
 namespace NoTypeSay;
 
 // ReSharper disable once UnusedType.Global
-public sealed unsafe class Plugin : IDalamudPlugin
+public sealed unsafe partial class Plugin : IDalamudPlugin
 {
     // This is the ID for eat chicken plus the flag they use to indicate an emote ID
     // We use this as a sentinel for identifying a button we injected, since we don't
@@ -125,30 +128,39 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 DetailText = Utf8String.FromSequence((byte*)stringArray->QuestTexts[entryCount + i]),
                 ButtonCount = numArray->ButtonCountForQuest[i]
             };
-            e.Strings = new Utf8String*[e.ButtonCount + 1]; // Always make room for one more in case I need to add
+
+            // Populate the existing data into our record
             for (var j = 0; j < e.ButtonCount; j++)
             {
                 e.ItemIDs.Add(numArray->QuestButtonActionId[offset]);
                 e.IconIDs.Add(numArray->QuestButtonIconID[offset]);
-                e.Strings[j] = Utf8String.FromSequence((byte*)stringArray->QuestStatusMessages[offset]);
+                e.Strings.Add(Utf8String.FromSequence((byte*)stringArray->QuestStatusMessages[offset]));
                 offset++;
             }
 
-            // check to see if our button is still present
-            // if it is, we don't want to add another button
-            // if the UI is full of buttons already somehow, don't add one either
-            if (e.ButtonCount < 4 && e.ItemIDs.LastOrDefault() != EmoteActionId)
+            // If we have a /say message, modify the button
+            var msg = QuestMessage(e.TitleText->ToString(), e.DetailText->ToString());
+            if (msg != "")
             {
-                // Add our button if we have a say message
-                var msg = QuestMessage(e.TitleText->ToString(), e.DetailText->ToString());
-                if (msg != "")
+                e.Message = $"/say {msg}";
+                e.Modified = true;
+                // check to see if our button is still present
+                // if it is, we don't want to add another button
+                // if the UI is full of buttons already somehow, don't add one either
+                if (e.ButtonCount < 4 && e.ItemIDs.LastOrDefault() != EmoteActionId)
                 {
-                    e.Message = $"/say {msg}";
                     e.ItemIDs.Add(EmoteActionId);
                     e.IconIDs.Add(ConverseIconId);
-                    e.Strings[e.ButtonCount++] = Utf8String.FromString(msg);
-
-                    e.Modified = true;
+                    e.Strings.Add(Utf8String.FromString(msg));
+                    e.ButtonCount++;
+                }
+                else if (e.ItemIDs.LastOrDefault() == EmoteActionId)
+                {
+                    // In this case, our button is still loaded from before somehow, so just
+                    // store the string for it on our entry
+                    // Also ensure that the IconID is still correct (it probably is, but this is safer)
+                    e.Strings[^1] = Utf8String.FromString(msg);
+                    e.IconIDs[^1] = ConverseIconId;
                 }
             }
 
@@ -160,7 +172,6 @@ public sealed unsafe class Plugin : IDalamudPlugin
         offset = 0;
         foreach (var e in questEntries) e.WriteTodoEntry(numArray, sad, ref offset);
     }
-
 
     private void ReceiveEventDetour(
         AtkEventListener* thisPtr, AtkEventType eventType, int eventParam, AtkEvent* atkEvent,
@@ -208,13 +219,19 @@ public sealed unsafe class Plugin : IDalamudPlugin
                 return false;
             }
 
-            // Now let's make sure we have the right button - we almost certainly do, since the button
+            // Now let's make sure we have the right button- we almost certainly do, since the button
             // is almost definitely the only one present on the entry, but let's be safe.
             // Yes, they store the event item/emote ID as the event's node pointer.
+            if (atkEvent->Node == null)
+            {
+                PluginLog.Debug("no node param");
+                return false;
+            }
+
             var itemOrEmoteId = *(uint*)atkEvent->Node;
             if (itemOrEmoteId != EmoteActionId)
             {
-                PluginLog.Debug("not our button");
+                PluginLog.Debug("not our button- {0}", itemOrEmoteId);
                 return false;
             }
 
@@ -252,22 +269,36 @@ public sealed unsafe class Plugin : IDalamudPlugin
     {
         var q = DataManager.GetExcelSheet<Quest>().FirstOrDefault(x => x.Name.ToString() == title);
         if (q.RowId == 0) return "";
-        var row = TextSheetForQuest(q).FirstOrDefault(qt =>　MessageMatch(detail, qt.Value.ToString()));
-        return row.RowId == 0 ? "" : row.Value.ToString();
+        return TextSheetForQuest(q).FirstOrNull(qd => MessageMatch(detail, qd))?.Value.ToString() ?? "";
     }
 
-    private static bool MessageMatch(string todoText, string message)
+    private static bool MessageMatch(string todoText, QuestDialogue qd)
     {
-        if (todoText == message) return false; // we don't want to match against the current todo step
-        return ClientState.ClientLanguage switch
+        if (!KeyRegex().IsMatch(qd.Key.ToString())) return false;
+        if (qd.Value.IsEmpty) return false;
+        var re = ClientState.ClientLanguage switch
         {
-            ClientLanguage.English => todoText.Contains($"“{message}”"),
-            ClientLanguage.French => todoText.Contains($"“{message}”"),
-            ClientLanguage.Japanese => todoText.Contains($"『{message}』") || todoText.Contains($"「{message}」"),
-            ClientLanguage.German => todoText.Contains($"„{message}“"),
-            _ => false
+            ClientLanguage.English => EnFrRegex(),
+            ClientLanguage.French => EnFrRegex(),
+            ClientLanguage.Japanese => JpRegex(),
+            ClientLanguage.German => DeRegex(),
+            _ => EnFrRegex() // This shouldn't really happen, but in the worst case, just try this
         };
+        var message = qd.Value.ToString();
+        return re.Matches(todoText).Any(m => m.Captures[0].Value.Contains(message));
     }
+
+    [GeneratedRegex("“([^”]+)”")]
+    private static partial Regex EnFrRegex();
+
+    [GeneratedRegex("「([^」])+」|『([^』]+)』")]
+    private static partial Regex JpRegex();
+
+    [GeneratedRegex("„([^“]+)“")]
+    private static partial Regex DeRegex();
+
+    [GeneratedRegex("_(SAY|SAYTODO|SYSTEM)_")]
+    private static partial Regex KeyRegex();
 
     private static ExcelSheet<QuestDialogue> TextSheetForQuest(Quest q)
     {
@@ -278,16 +309,16 @@ public sealed unsafe class Plugin : IDalamudPlugin
 
     private class Entry : IDisposable
     {
+        // These should never have more than 4 items
         internal readonly List<int> IconIDs = [];
         internal readonly List<int> ItemIDs = [];
+        internal readonly List<Pointer<Utf8String>> Strings = [];
 
-        // These should never have more than 4 items
         internal int ButtonCount;
         internal Utf8String* DetailText; // used to id the quest step
         internal int Index;
         internal string Message = "";
         internal bool Modified;
-        internal Utf8String*[] Strings = [];
 
         internal Utf8String* TitleText; // used to id the quest
 
@@ -296,8 +327,8 @@ public sealed unsafe class Plugin : IDalamudPlugin
             if (TitleText != null) TitleText->Dtor(true);
             if (DetailText != null) DetailText->Dtor(true);
             foreach (var s in Strings)
-                if (s != null)
-                    s->Dtor(true);
+                if (s.Value != null)
+                    s.Value->Dtor(true);
         }
 
         // ReSharper disable once UnusedMember.Local
